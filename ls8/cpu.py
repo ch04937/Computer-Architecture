@@ -16,7 +16,7 @@ class CPU:
         '''
         should accept the address to read and return the value stored there
         '''
-        print(self.ram[address])
+        self.ram[address]
 
     def raw_write(self, address, write_value):
         '''
@@ -76,9 +76,33 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        self.ram_read(self.pc)
+        # instruction definition so that we can refer to it by name isntead of numeric value
+        HLT = 0b00000001  # HALT
+        LDI = 0b10000010  # LDI
+        PRN = 0b01000111  # PRN
+
+        # self.ram_read(self.pc)
         command = self.ram[self.pc]
-        print(command)
+        print(self.ram)
+        while True:
+            if command == HLT:
+                # HALT should exit the program
+                print('bye, bye')
+                sys.exit(0)
+            elif command == LDI:
+                # LDI print register immediate #
+                register = self.ram[self.pc + 2]
+                self.reg[self.pc] = register
+                # self.pc += 1
+                return print(f'{self.reg[self.pc]}')
+
+            elif command == PRN:
+                # print numeric value stored in the given register
+                # self.pc += 1
+                return print(f'{self.reg[self.pc]}')
+            else:
+                # else print error
+                print('I did not understand that command')
 
 
 c = CPU()

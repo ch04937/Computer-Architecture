@@ -91,15 +91,15 @@ class CPU:
                 sys.exit(0)
             elif command == LDI:
                 # LDI print register immediate #
-                register = self.ram[self.pc + 2]
+                register = self.ram[self.pc + 1]
                 self.reg[self.pc] = register
-                # self.pc += 1
-                return print(f'{self.reg[self.pc]}')
+                print(f'{self.reg[self.pc]}')
+                self.pc += 1
 
             elif command == PRN:
                 # print numeric value stored in the given register
-                # self.pc += 1
-                return print(f'{self.reg[self.pc]}')
+                print(f'{self.reg[self.pc+1]}')
+                self.pc += 2
             else:
                 # else print error
                 print('I did not understand that command')

@@ -21,8 +21,8 @@ try:
             if value == '':
                 continue
 
-            num = int(num, 2)
-            memory[mem_pointer] = value
+            num = int(value)
+            memory[mem_pointer] = num
             mem_pointer += 1
             print(f'{num:08}: {num}')
 

@@ -2,15 +2,51 @@
 
 import sys
 
+# instruction definition so that we can refer to it by name isntead of numeric value
+
+HLT = 0b00000001  # HALT: STOP
+LDI = 0b10000010  # LDI: PRINT IMMEDIATE NUMBER
+PRN = 0b01000111  # PRN: PRINT NUMERIC VALUE STORED
+MUL = 0b10100010  # MUL: MULTIPLY 2 STORED VALUES
+
 
 class CPU:
     """Main CPU class."""
 
     def __init__(self):
         """Construct a new CPU."""
+
         self.ram = [0]*25
         self.pc = 0  # Program counter
         self.reg = [0]*8
+        self.rg = 0  # register counter
+
+        # set up the branch table
+        self.branchtable = {}
+        self.branchtable[HLT] = self.HLT
+        self.branchtable[LDI] = self.LDI
+        self.branchtable[PRN] = self.PRN
+        self.branchtable[MUL] = self.MUL
+
+    def HLT(self):
+        print('bye, bye')
+        sys.exit(0)
+
+    def LDI(self):
+        register = self.ram[self.pc+2]
+        self.reg[self.rg] = register
+        self.rg += 1
+        self.pc += 3
+
+    def PRN(self):
+        # print numeric value stored in the given register
+        print(f'MUL R0*R1: {self.reg[0]}')
+        self.pc += 2
+
+    def MUL(self):
+        # multipy the values store in two registers and store results in registerA
+        self.reg[0] = self.reg[0] * self.reg[1]
+        self.pc += 3
 
     def ram_read(self, address):
         '''
@@ -27,10 +63,10 @@ class CPU:
     def load(self, filename):
         """Load a program into memory."""
         try:
-            address = 0
             # Open the file
             with open(filename) as f:
                 # Read all the lines
+                address = 0
                 for line in f:
                     # Parse out comments
                     comment_split = line.strip().split("#")
@@ -39,7 +75,7 @@ class CPU:
                     # Ignore blank lines
                     if value == '':
                         continue
-                    instruction = int(value)
+                    instruction = int(value, 2)
                     self.ram[address] = instruction
                     address += 1
         except FileNotFoundError:
@@ -77,40 +113,18 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        # instruction definition so that we can refer to it by name isntead of numeric value
-        HLT = 0b00000001  # HALT
-        LDI = 0b10000010  # LDI
-        PRN = 0b01000111  # PRN
-
-        # self.ram_read(self.pc)
-        command = self.ram[self.pc]
-        print(self.ram)
         while True:
-            if command == HLT:
-                # HALT should exit the program
-                print('bye, bye')
-                sys.exit(0)
-            elif command == LDI:
-                # LDI print register immediate #
-                register = self.ram[self.pc + 1]
-                self.reg[self.pc] = register
-                print(f'{self.reg[self.pc]}')
-                self.pc += 1
-
-            elif command == PRN:
-                # print numeric value stored in the given register
-                print(f'{self.reg[self.pc+1]}')
-                self.pc += 2
-            else:
-                # else print error
-                print('I did not understand that command')
+            command = self.ram[self.pc]
+            self.branchtable[command]()
 
 
 if len(sys.argv) != 2:
     print('ERROR: Must have file name')
     sys.exit(1)
 
+
 c = CPU()
 c.load(sys.argv[1])
-print(c.ram)
-# c.run()
+print('memory: ', c.ram)
+# print('reg: ', c.reg)
+c.run()

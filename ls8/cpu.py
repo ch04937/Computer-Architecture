@@ -8,6 +8,8 @@ HLT = 0b00000001  # HALT: STOP
 LDI = 0b10000010  # LDI: PRINT IMMEDIATE NUMBER
 PRN = 0b01000111  # PRN: PRINT NUMERIC VALUE STORED
 MUL = 0b10100010  # MUL: MULTIPLY 2 STORED VALUES
+PSH = 0b01000101  # PSH: PUSH THE VALUE IN THE GIVEN REGISTER TO THE STACK
+POP = 0b01000110  # POP: POP THE VALUE AT THE TOP OF THE STACK INTO THE GIVEN REGISTER
 
 
 class CPU:
@@ -16,10 +18,11 @@ class CPU:
     def __init__(self):
         """Construct a new CPU."""
 
-        self.ram = [0]*25
+        self.ram = [0]*50  # memory
         self.pc = 0  # Program counter
-        self.reg = [0]*8
+        self.reg = [0]*8  # list of registers
         self.rg = 0  # register counter
+        self.sp = 7  # stack pointer is R7
 
         # set up the branch table
         self.branchtable = {}
@@ -27,8 +30,43 @@ class CPU:
         self.branchtable[LDI] = self.LDI
         self.branchtable[PRN] = self.PRN
         self.branchtable[MUL] = self.MUL
+        self.branchtable[PSH] = self.PSH
+        self.branchtable[POP] = self.POP
+
+    def POP(self):
+        '''
+        1. Copy the value from the address pointed to by `SP` to the given register.
+        2. Increment `SP`.
+
+        '''
+        # grab the value from the top of the stack
+        reg = self.ram[self.pc+1]
+        val = self.ram[self.reg[self.sp]]
+        # copy the value from the address pointed to be sp to the given register
+        self.reg[reg] = val
+        # increment sp
+        self.reg[self.sp] += 1
+        self.pc += 2
+
+    def PSH(self):
+        '''
+        1. Decrement the `SP`.
+        2. Copy the value in the given register to the address pointed to by
+
+        '''
+        # grab the register argument
+        reg = self.ram[self.pc+1]
+        val = self.reg[reg]
+        # decrement the SP
+        self.reg[self.sp] -= 1
+        # copy the value in the given register to the address pointed to by sp
+        self.ram[self.reg[self.sp]] = val
+        self.pc += 2
 
     def HLT(self):
+        print('reg: ', c.reg)
+        print('memory: ', c.ram)
+
         print('bye, bye')
         sys.exit(0)
 
@@ -125,6 +163,5 @@ if len(sys.argv) != 2:
 
 c = CPU()
 c.load(sys.argv[1])
-print('memory: ', c.ram)
-# print('reg: ', c.reg)
+print(c.ram)
 c.run()

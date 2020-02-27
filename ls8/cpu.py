@@ -10,6 +10,9 @@ PRN = 0b01000111  # PRN: PRINT NUMERIC VALUE STORED
 MUL = 0b10100010  # MUL: MULTIPLY 2 STORED VALUES
 PSH = 0b01000101  # PSH: PUSH THE VALUE IN THE GIVEN REGISTER TO THE STACK
 POP = 0b01000110  # POP: POP THE VALUE AT THE TOP OF THE STACK INTO THE GIVEN REGISTER
+CAL = 0b01010000  # CAL: CALLS A SUBROUTINE AT TEH ADDRESS STORED IN THE REGISTER
+RET = 0b00010001  # RET: RETURN FROM SUBROUTINE
+ADD = 0b10100000  # ADD: ADD VALUES STORED IN REGISTER
 
 
 class CPU:
@@ -18,10 +21,9 @@ class CPU:
     def __init__(self):
         """Construct a new CPU."""
 
-        self.ram = [0]*50  # memory
+        self.ram = [0]*49  # memory
         self.pc = 0  # Program counter
         self.reg = [0]*8  # list of registers
-        self.rg = 0  # register counter
         self.sp = 7  # stack pointer is R7
 
         # set up the branch table
@@ -32,6 +34,44 @@ class CPU:
         self.branchtable[MUL] = self.MUL
         self.branchtable[PSH] = self.PSH
         self.branchtable[POP] = self.POP
+        self.branchtable[CAL] = self.CAL
+        self.branchtable[RET] = self.RET
+        self.branchtable[ADD] = self.ADD
+
+    def ADD(self):
+        '''
+        Add R0+R0
+        '''
+        self.reg[0] += self.reg[0]
+        print('adding', self.reg)
+        self.pc += 3
+
+    def CAL(self):
+        '''
+        1. The address of the ***instruction*** _directly after_ `CALL` is
+        pushed onto the stack. This allows us to return to where we left off when the subroutine finishes executing.
+        2. The PC is set to the address stored in the given register. We jump to that location in RAM and execute the first instruction in the subroutine. The PC can move forward or backwards from its current location.
+
+        '''
+        val = self.pc + 2
+        reg = self.ram[self.pc+1]
+        sub_routine = self.reg[reg]
+
+        self.reg[self.sp] -= 1
+        self.ram[self.reg[self.sp]] = val
+
+        self.pc = sub_routine
+        # print(self.reg[0])
+
+    def RET(self):
+        '''
+        Return from subroutine 
+        Pop the value from the top of the stack and store it in the PC
+        '''
+        returning = self.reg[self.sp]
+        self.pc = self.ram[returning]
+
+        self.reg[self.sp] += 1
 
     def POP(self):
         '''
@@ -71,14 +111,18 @@ class CPU:
         sys.exit(0)
 
     def LDI(self):
-        register = self.ram[self.pc+2]
-        self.reg[self.rg] = register
-        self.rg += 1
+        '''
+        Set the value of a register to an integer.
+        '''
+        register = self.ram[self.pc+1]
+        num = self.ram[self.pc+2]
+
+        self.reg[register] = num
         self.pc += 3
 
     def PRN(self):
         # print numeric value stored in the given register
-        print(f'MUL R0*R1: {self.reg[0]}')
+        print(f'reg[0]: {self.reg[0]}')
         self.pc += 2
 
     def MUL(self):
